@@ -54,7 +54,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	reg = FTTSC010_ADC_CLK_ADC(0x2)
 	    | FTTSC010_ADC_CLK_SAMPLE(0x10);
 
-	dev_warn(dev, "[ADC CLK]   = %08x\n", reg);
+	dev_info(dev, "[ADC CLK]   = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_CLK);
 
 	/*
@@ -68,7 +68,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	    | FTTSC010_INT_UNDERRUN
 	    | FTTSC010_INT_OVERRUN;
 
-	dev_warn(dev, "[MASK]      = %08x\n", reg);
+	dev_info(dev, "[MASK]      = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_INT_ENABLE);
 
 	/*
@@ -78,7 +78,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	    | FTTSC010_PANEL_AUTO_ZPST
 	    | FTTSC010_PANEL_DEBOUNCE_12MS;
 
-	dev_warn(dev, "[PANEL]     = %08x\n", reg);
+	dev_info(dev, "[PANEL]     = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_PANEL);
 
 	/*
@@ -87,7 +87,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	reg = 0x88;
 	reg &= FTTSC010_ADC_DELAY_MASK;
 
-	dev_warn(dev, "[ADC DELAY] = %08x\n", reg);
+	dev_info(dev, "[ADC DELAY] = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_DELAY);
 
 	/*
@@ -104,7 +104,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	    | FTTSC010_ADC_CTRL_CH7DELAY_EN
 	    | FTTSC010_ADC_CTRL_AUTOSCAN;
 
-	dev_warn(dev, "[ADC CTRL]  = %08x\n", reg);
+	dev_info(dev, "[ADC CTRL]  = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_CTRL);
 }
 
@@ -165,7 +165,7 @@ static irqreturn_t fttsc010_interrupt(int irq, void *dev_id)
 			input_report_key(input, BTN_TOUCH, 1);
 			input_sync(input);
 
-			dev_warn(&input->dev, "(%4d, %4d), %d\n", x, y, pressure);
+			dev_dbg(&input->dev, "(%4d, %4d), %d\n", x, y, pressure);
 
 		} else {
 			/* pen up */
