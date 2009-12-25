@@ -1,0 +1,30 @@
+Usage:
+
+* put the following code in your platform-dpendent initialization sequence.
+------------------------>8-------------------------->8------------------------
+static struct resource fttsc010_resources[] = {
+	{
+		.start  = ADC_FTTSC010_0_PA_BASE,
+		.end    = ADC_FTTSC010_0_PA_LIMIT,
+		.flags  = IORESOURCE_MEM,
+	}, {	/* ADC interrupt */
+		.start	= ADC_FTTSC010_0_IRQ0,
+		.end	= ADC_FTTSC010_0_IRQ0,
+		.flags	= IORESOURCE_IRQ,
+	}, {	/* stylus interrupt */
+		.start	= ADC_FTTSC010_0_IRQ1,
+		.end	= ADC_FTTSC010_0_IRQ1,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device fttsc010_device = {
+	.name		= "fttsc010",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(fttsc010_resources),
+	.resource	= fttsc010_resources,
+};
+
+platform_device_register(&fttsc010_device);
+------------------------>8-------------------------->8------------------------
+
