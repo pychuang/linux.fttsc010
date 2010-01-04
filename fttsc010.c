@@ -279,7 +279,7 @@ static int __devinit fttsc010_probe(struct platform_device *pdev)
 #else
 	input_set_abs_params(input, ABS_X, 100, 3850, 0, 0);
 	input_set_abs_params(input, ABS_Y, 260, 3860, 0, 0);
-	input_set_abs_params(input, ABS_PRESSURE, 0, 10000, 0, 0);
+	input_set_abs_params(input, ABS_PRESSURE, 0, PRESSURE_MAX, 0, 0);
 #endif
 
 	fttsc010_enable(fttsc010);
