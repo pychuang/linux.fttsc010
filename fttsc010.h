@@ -153,7 +153,7 @@
 /*
  * ADC sampling delay control register
  */
-#define FTTSC010_ADC_DELAY_MASK		0xffff
+#define FTTSC010_ADC_DELAY(x)	((x) & 0xffff)
 
 /*
  * Touch screen position data register

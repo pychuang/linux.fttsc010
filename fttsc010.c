@@ -31,6 +31,12 @@
 
 #include "fttsc010.h"
 
+#define SAMPLES_PER_SEC	10
+
+#define INPUT_CLK	33000000	/* Main clock oscillator on A369 */
+#define ADC_MAIN_CLK	2000000	/* must < 2.8 MHz */
+#define ADC_SLOT_SIZE	0x10	/* must > 14 */
+
 #define PRESSURE_MAX	1000
 
 struct fttsc010 {
@@ -46,16 +52,44 @@ struct fttsc010 {
 static void fttsc010_enable(struct fttsc010 *fttsc010)
 {
 	struct device *dev = &fttsc010->input->dev;
+	int tmp;
 	int reg;
 
 	/*
 	 * ADC clock and sampling rate configuration register
+	 *
+	 * FTTSC010_ADC_CLK_ADC determines the main clock.
+	 * The main clock is used as input clock of ADC which must smaller
+	 * than 2.8MHz.
+	 * FTTSC010_ADC_CLK_SAMPLE determines the sample time slot size.
+	 * The ADC needs more than 14 clocks per time slot.
+	 * That means FTTSC010_ADC_CLK_SAMPLE must be greater than 14.
 	 */
-	reg = FTTSC010_ADC_CLK_ADC(0x2)
-	    | FTTSC010_ADC_CLK_SAMPLE(0x10);
+	tmp = INPUT_CLK / 2 / ADC_MAIN_CLK;
+
+	reg = FTTSC010_ADC_CLK_ADC(tmp)
+	    | FTTSC010_ADC_CLK_SAMPLE(ADC_SLOT_SIZE - 1);
 
 	dev_info(dev, "[ADC CLK]   = %08x\n", reg);
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_CLK);
+
+	/*
+	 * ADC sampling delay control register
+	 *
+	 * This determines how many frames we do a sample.
+	 * Each frame consists of 16 time slots.
+	 * Every FTTSC010_ADC_DELAY frames, three frames are used for
+	 * sampling X, Y and Z1/Z2.
+	 */
+	tmp = INPUT_CLK / tmp / 2;	/* main clock */
+	tmp /= ADC_SLOT_SIZE;	/* slots per sec */
+	tmp /= 16;		/* frames per sec */
+	tmp /= SAMPLES_PER_SEC;	/* frames per sample */
+
+	reg = FTTSC010_ADC_DELAY(tmp);
+
+	dev_info(dev, "[ADC DELAY] = %08x\n", reg);
+	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_DELAY);
 
 	/*
 	 * Enable interrupt
@@ -82,26 +116,9 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_PANEL);
 
 	/*
-	 * ADC sampling delay control register
-	 */
-	reg = 0x88;
-	reg &= FTTSC010_ADC_DELAY_MASK;
-
-	dev_info(dev, "[ADC DELAY] = %08x\n", reg);
-	iowrite32(reg, fttsc010->base + FTTSC010_OFFSET_ADC_DELAY);
-
-	/*
 	 * ADC power on, Enable autoscan
 	 */
 	reg = FTTSC010_ADC_CTRL_XPWDB
-	    | FTTSC010_ADC_CTRL_CH0DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH1DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH2DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH3DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH4DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH5DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH6DELAY_EN
-	    | FTTSC010_ADC_CTRL_CH7DELAY_EN
 	    | FTTSC010_ADC_CTRL_AUTOSCAN;
 
 	dev_info(dev, "[ADC CTRL]  = %08x\n", reg);
