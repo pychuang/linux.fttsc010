@@ -276,7 +276,7 @@ static int __devinit fttsc010_probe(struct platform_device *pdev)
 		goto err_ioremap;
 	}
 
-	ret = request_irq(irq, fttsc010_interrupt, 0, dev->bus_id, fttsc010);
+	ret = request_irq(irq, fttsc010_interrupt, 0, pdev->name, fttsc010);
 	if (ret < 0) {
 		dev_err(dev, "Failed to request irq %d\n", irq);
 		goto err_req_irq;
