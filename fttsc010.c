@@ -317,7 +317,7 @@ err_register_input:
 err_req_irq:
 	iounmap(fttsc010->base);
 err_ioremap:
-//	release_mem_region(res->start, res->end - res->start);
+	release_mem_region(res->start, res->end - res->start);
 err_req_mem_region:
 	input_free_device(fttsc010->input);
 err_alloc_input_dev:
@@ -339,7 +339,7 @@ static int __devexit fttsc010_remove(struct platform_device *pdev)
 	input_unregister_device(fttsc010->input);
 	free_irq(fttsc010->irq, fttsc010);
 	iounmap(fttsc010->base);
-//	release_mem_region(res->start, res->end - res->start);
+	release_mem_region(res->start, res->end - res->start);
 	input_free_device(fttsc010->input);
 	platform_set_drvdata(pdev, fttsc010);
 	kfree(fttsc010);
