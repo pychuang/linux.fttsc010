@@ -20,6 +20,7 @@
  */
 
 #include <linux/version.h>
+#include <linux/clk.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
@@ -34,7 +35,6 @@
 
 #define SAMPLES_PER_SEC	10
 
-#define INPUT_CLK	33000000	/* Main clock oscillator on A369 */
 #define ADC_MAIN_CLK	2000000	/* must < 2.8 MHz */
 #define ADC_SLOT_SIZE	0x10	/* must > 14 */
 
@@ -45,6 +45,7 @@ struct fttsc010 {
 	struct resource *res;
 	void *base;
 	int irq;
+	struct clk *clk;
 };
 
 /******************************************************************************
@@ -53,6 +54,7 @@ struct fttsc010 {
 static void fttsc010_enable(struct fttsc010 *fttsc010)
 {
 	struct device *dev = &fttsc010->input->dev;
+	unsigned long clkrate = clk_get_rate(fttsc010->clk);
 	int tmp;
 	int reg;
 
@@ -66,7 +68,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	 * The ADC needs more than 14 clocks per time slot.
 	 * That means FTTSC010_ADC_CLK_SAMPLE must be greater than 14.
 	 */
-	tmp = INPUT_CLK / 2 / ADC_MAIN_CLK;
+	tmp = clkrate / 2 / ADC_MAIN_CLK;
 
 	reg = FTTSC010_ADC_CLK_ADC(tmp)
 	    | FTTSC010_ADC_CLK_SAMPLE(ADC_SLOT_SIZE - 1);
@@ -82,7 +84,7 @@ static void fttsc010_enable(struct fttsc010 *fttsc010)
 	 * Every FTTSC010_ADC_DELAY frames, three frames are used for
 	 * sampling X, Y and Z1/Z2.
 	 */
-	tmp = INPUT_CLK / tmp / 2;	/* main clock */
+	tmp = clkrate / tmp / 2;	/* main clock */
 	tmp /= ADC_SLOT_SIZE;	/* slots per sec */
 	tmp /= 16;		/* frames per sec */
 	tmp /= SAMPLES_PER_SEC;	/* frames per sample */
@@ -218,6 +220,7 @@ static int __devinit fttsc010_probe(struct platform_device *pdev)
 	struct fttsc010 *fttsc010;
 	struct input_dev *input;
 	struct resource *res;
+	struct clk *clk;
 	int irq;
 	int ret;
 
@@ -247,6 +250,16 @@ static int __devinit fttsc010_probe(struct platform_device *pdev)
 		goto err_alloc_priv;
 	}
 	platform_set_drvdata(pdev, fttsc010);
+
+	clk = clk_get(NULL, "pclk");
+	if (IS_ERR(clk)) {
+		dev_err(dev, "Failed to get clock.\n");
+		ret = PTR_ERR(clk);
+		goto err_clk_get;
+	}
+
+	clk_enable(clk);
+	fttsc010->clk = clk;
 
 	/*
 	 * Allocate input_dev
@@ -321,6 +334,9 @@ err_ioremap:
 err_req_mem_region:
 	input_free_device(fttsc010->input);
 err_alloc_input_dev:
+	clk_disable(clk);
+	clk_put(clk);
+err_clk_get:
 	platform_set_drvdata(pdev, NULL);
 	kfree(fttsc010);
 err_alloc_priv:
@@ -339,6 +355,8 @@ static int __devexit fttsc010_remove(struct platform_device *pdev)
 	input_unregister_device(fttsc010->input);
 	free_irq(fttsc010->irq, fttsc010);
 	iounmap(fttsc010->base);
+	clk_disable(fttsc010->clk);
+	clk_put(fttsc010->clk);
 	release_mem_region(res->start, resource_size(res));
 	input_free_device(fttsc010->input);
 	platform_set_drvdata(pdev, NULL);
