@@ -33,7 +33,7 @@
 
 #include "fttsc010.h"
 
-#define SAMPLES_PER_SEC	10
+#define SAMPLES_PER_SEC	50
 
 #define ADC_MAIN_CLK	2000000	/* must < 2.8 MHz */
 #define ADC_SLOT_SIZE	0x10	/* must > 14 */
