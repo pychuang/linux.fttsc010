@@ -254,7 +254,7 @@ static int __devinit fttsc010_probe(struct platform_device *pdev)
 	}
 	platform_set_drvdata(pdev, fttsc010);
 
-	clk = clk_get(NULL, "pclk");
+	clk = clk_get(NULL, "tsc");
 	if (IS_ERR(clk)) {
 		dev_err(dev, "Failed to get clock.\n");
 		ret = PTR_ERR(clk);
