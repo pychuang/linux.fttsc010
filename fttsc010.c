@@ -160,6 +160,7 @@ static irqreturn_t fttsc010_interrupt(int irq, void *dev_id)
 	status = ioread32(fttsc010->base + FTTSC010_OFFSET_INT_STATUS);
 
 	if (status & FTTSC010_INT_AUTO_PST) {
+		static bool was_down;
 		unsigned int data;
 		unsigned int x, y;
 		unsigned int z1, z2;
@@ -185,9 +186,10 @@ static irqreturn_t fttsc010_interrupt(int irq, void *dev_id)
 			input_report_key(input, BTN_TOUCH, 1);
 			input_sync(input);
 
+			was_down = true;
 			dev_dbg(&input->dev, "(%4d, %4d), %d\n", x, y, pressure);
 
-		} else {
+		} else if (was_down) {
 			/* pen up */
 			dev_dbg(&input->dev, "pen up\n");
 
@@ -195,6 +197,7 @@ static irqreturn_t fttsc010_interrupt(int irq, void *dev_id)
 			input_report_abs(input, ABS_PRESSURE, 0);
 
 			input_sync(input);
+			was_down = false;
 		}
 	}
 
